@@ -1,3 +1,4 @@
+"use strict";
 // function add(n1: number, n2: number) {
 //   return n1 + n2;
 // }
@@ -58,8 +59,8 @@ console.log(ans);
 
 */
 //* Unknown type
-var userInput;
-var userName = "";
+let userInput;
+let userName = "";
 // ..
 // userName = userInput; // this will give error
 // unknown is more restrictive than any
@@ -71,7 +72,13 @@ if (typeof userInput === "string") {
 }
 console.log(userName);
 function generateError(message, errorCode) {
-    throw { message: message, errorCode: errorCode };
+    throw { message, errorCode };
 }
-var msg = generateError("An error occurred!", 500);
-console.log(msg);
+// let msg = generateError("An error occurred!", 500);
+// console.log(msg);
+console.log("Watch-Mode!!");
+const button = document.querySelector("button");
+//! tells ts that this will never be null
+button.addEventListener("click", () => {
+    console.log("Clicked!");
+});

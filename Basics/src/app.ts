@@ -122,5 +122,13 @@ function generateError(message: string, errorCode: number): never {
   throw { message, errorCode };
 }
 
-let msg = generateError("An error occurred!", 500);
-console.log(msg);
+// let msg = generateError("An error occurred!", 500);
+// console.log(msg);
+
+console.log("Watch-Mode!!");
+
+const button = document.querySelector("button")!;
+//! tells ts that this will never be null
+button.addEventListener("click", () => {
+  console.log("Clicked!");
+});
