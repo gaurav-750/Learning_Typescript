@@ -108,3 +108,5 @@ accountsDept.printEmployeeInfo();
 
 accountsDept.setLastReport = "report4 latest one";
 console.log(accountsDept.getLastReport);
+
+//Static methods and properties
