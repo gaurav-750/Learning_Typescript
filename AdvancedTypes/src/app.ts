@@ -92,3 +92,40 @@ function useVehicle(vehicle: Vehicle) {
 
 useVehicle(v1);
 useVehicle(v2);
+
+//* Discriminated Unions
+interface Bird {
+  type: "bird";
+  flyingSpeed: number;
+}
+
+interface Horse {
+  type: "horse";
+  runningSpeed: number;
+}
+
+type Animal = Bird | Horse;
+
+function animalMovingSpeed(animal: Animal) {
+  let speed;
+  switch (animal.type) {
+    case "bird":
+      speed = animal.flyingSpeed;
+      break;
+    case "horse":
+      speed = animal.runningSpeed;
+    default:
+      break;
+  }
+
+  console.log("Moving Speed:", speed);
+}
+
+animalMovingSpeed({ type: "bird", flyingSpeed: 10 });
+
+//* Type Casting
+const inputElement = document.getElementById(
+  "message-input"
+) as HTMLInputElement;
+
+inputElement.value = "Hi there!";

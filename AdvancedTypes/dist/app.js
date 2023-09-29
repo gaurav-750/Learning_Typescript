@@ -54,3 +54,20 @@ function useVehicle(vehicle) {
 }
 useVehicle(v1);
 useVehicle(v2);
+function animalMovingSpeed(animal) {
+    let speed;
+    switch (animal.type) {
+        case "bird":
+            speed = animal.flyingSpeed;
+            break;
+        case "horse":
+            speed = animal.runningSpeed;
+        default:
+            break;
+    }
+    console.log("Moving Speed:", speed);
+}
+animalMovingSpeed({ type: "bird", flyingSpeed: 10 });
+//* Type Casting
+const inputElement = document.getElementById("message-input");
+inputElement.value = "Hi there!";
