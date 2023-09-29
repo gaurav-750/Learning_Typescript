@@ -150,3 +150,17 @@ const error: ErrorContainer = {
   username: "Must start with a capital character!",
   phone: "10 digit number only!",
 };
+
+//* Optional Chaining
+const fetchedUserData = {
+  id: "user-001",
+  name: "Gaurav",
+  job: { title: "CEO", description: "My own company!" },
+};
+
+console.log(fetchedUserData?.job?.title);
+
+//* Nullish Coalescing
+const userInput = "";
+const data = userInput ?? "DEFAULT";
+console.log("data:", data);

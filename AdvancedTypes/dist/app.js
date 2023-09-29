@@ -1,5 +1,6 @@
 "use strict";
 // console.log("Advanced Types!");
+var _a;
 const e1 = {
     name: "Gaurav",
     privileges: ["p1", "p2"],
@@ -78,3 +79,14 @@ const error = {
     username: "Must start with a capital character!",
     phone: "10 digit number only!",
 };
+//* Optional Chaining
+const fetchedUserData = {
+    id: "user-001",
+    name: "Gaurav",
+    job: { title: "CEO", description: "My own company!" },
+};
+console.log((_a = fetchedUserData === null || fetchedUserData === void 0 ? void 0 : fetchedUserData.job) === null || _a === void 0 ? void 0 : _a.title);
+//* Nullish Coalescing
+const userInput = "";
+const data = userInput !== null && userInput !== void 0 ? userInput : "DEFAULT";
+console.log("data:", data);
