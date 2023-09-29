@@ -27,6 +27,10 @@ type Numeric = number | boolean;
 type Universal = Combinable & Numeric;
 // const u1: Universal = 1;
 
+function add(a: number, b: number): number;
+function add(a: string, b: string): string;
+function add(a: string, b: number): string;
+function add(a: number, b: string): string;
 function add(n1: Combinable, n2: Combinable) {
   //* 1st type guard
   if (typeof n1 === "string" || typeof n2 === "string") {
@@ -36,6 +40,10 @@ function add(n1: Combinable, n2: Combinable) {
   //means both are numbers
   return n1 + n2;
 }
+
+//* function overloads
+const result = add(1, "Gaurav");
+result.split(" ");
 
 //* 2nd type guard
 type UnknownEmployee = Employee | Admin;
@@ -129,3 +137,16 @@ const inputElement = document.getElementById(
 ) as HTMLInputElement;
 
 inputElement.value = "Hi there!";
+
+//* Index Properties
+interface ErrorContainer {
+  [prop: string]: string;
+  phone: string;
+  // isMarried: boolean; //not allowed
+}
+
+const error: ErrorContainer = {
+  email: "Not a valid email",
+  username: "Must start with a capital character!",
+  phone: "10 digit number only!",
+};

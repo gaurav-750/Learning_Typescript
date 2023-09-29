@@ -6,7 +6,6 @@ const e1 = {
     startDate: new Date(),
 };
 console.log(e1);
-// const u1: Universal = 1;
 function add(n1, n2) {
     //* 1st type guard
     if (typeof n1 === "string" || typeof n2 === "string") {
@@ -15,6 +14,9 @@ function add(n1, n2) {
     //means both are numbers
     return n1 + n2;
 }
+//* function overloads
+const result = add(1, "Gaurav");
+result.split(" ");
 function printEmployeeInformation(emp) {
     console.log("name:", emp.name);
     if ("privileges" in emp) {
@@ -71,3 +73,8 @@ animalMovingSpeed({ type: "bird", flyingSpeed: 10 });
 //* Type Casting
 const inputElement = document.getElementById("message-input");
 inputElement.value = "Hi there!";
+const error = {
+    email: "Not a valid email",
+    username: "Must start with a capital character!",
+    phone: "10 digit number only!",
+};
