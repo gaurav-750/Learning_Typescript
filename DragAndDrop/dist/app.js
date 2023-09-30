@@ -9,12 +9,27 @@ class ProjectInput {
         const importNode = document.importNode(this.templateElement.content, true);
         //* this is the 'form' element, which is the first child of the template
         this.element = importNode.firstElementChild;
+        this.element.id = "user-input"; //adding id to the form element
         console.log(this.element);
-        this.setDiv();
+        //* accessing the input elements
+        this.titleInput = this.element.querySelector("#title");
+        this.descriptionInput = this.element.querySelector("#description");
+        this.peopleInput = this.element.querySelector("#people");
+        this.addFormToDiv();
+        this.configure();
     }
-    setDiv() {
+    //* Methods
+    addFormToDiv() {
         //attach the form element to the div element
         this.divElement.appendChild(this.element);
+    }
+    configure() {
+        this.element.addEventListener("submit", this.submitHandler.bind(this));
+    }
+    submitHandler(event) {
+        event.preventDefault();
+        console.log("this", this);
+        console.log(this.titleInput.value, this.descriptionInput.value, this.peopleInput.value);
     }
 }
 const projectInput = new ProjectInput();

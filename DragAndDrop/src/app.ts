@@ -3,6 +3,10 @@ class ProjectInput {
   divElement: HTMLDivElement; //jaha par hume ye template dalna hai
   element: HTMLFormElement;
 
+  titleInput: HTMLInputElement;
+  descriptionInput: HTMLInputElement;
+  peopleInput: HTMLInputElement;
+
   constructor() {
     console.log("constructor called");
 
@@ -18,14 +22,43 @@ class ProjectInput {
 
     //* this is the 'form' element, which is the first child of the template
     this.element = importNode.firstElementChild as HTMLFormElement;
+
+    this.element.id = "user-input"; //adding id to the form element
     console.log(this.element);
 
-    this.setDiv();
+    //* accessing the input elements
+    this.titleInput = this.element.querySelector("#title") as HTMLInputElement;
+    this.descriptionInput = this.element.querySelector(
+      "#description"
+    ) as HTMLInputElement;
+    this.peopleInput = this.element.querySelector(
+      "#people"
+    ) as HTMLInputElement;
+
+    this.addFormToDiv();
+    this.configure();
   }
 
-  setDiv() {
+  //* Methods
+
+  private addFormToDiv() {
     //attach the form element to the div element
     this.divElement.appendChild(this.element);
+  }
+
+  private configure() {
+    this.element.addEventListener("submit", this.submitHandler.bind(this));
+  }
+
+  private submitHandler(event: Event) {
+    event.preventDefault();
+    console.log("this", this);
+
+    console.log(
+      this.titleInput.value,
+      this.descriptionInput.value,
+      this.peopleInput.value
+    );
   }
 }
 
