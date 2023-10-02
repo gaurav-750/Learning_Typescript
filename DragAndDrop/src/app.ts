@@ -88,33 +88,52 @@ function validate(input: Validatable) {
   return isValid;
 }
 
-class ProjectInput {
+//Generic class
+abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   templateElement: HTMLTemplateElement; //template
-  divElement: HTMLDivElement; //jaha par hume ye template dalna hai
-  element: HTMLFormElement;
+  divElement: T; //jaha par hume ye template dalna hai
+  element: U;
 
-  titleInput: HTMLInputElement;
-  descriptionInput: HTMLInputElement;
-  peopleInput: HTMLInputElement;
-
-  constructor() {
-    console.log("constructor called");
-
+  constructor(templateId: string, divId: string, newElementId?: string) {
     //reference to both the elements
     this.templateElement = document.getElementById(
-      "project-input"
+      templateId
     )! as HTMLTemplateElement;
 
-    this.divElement = document.getElementById("app")! as HTMLDivElement;
+    this.divElement = document.getElementById("app")! as T;
 
     //this is the copy of the template
     const importNode = document.importNode(this.templateElement.content, true);
 
     //* this is the 'form' element, which is the first child of the template
-    this.element = importNode.firstElementChild as HTMLFormElement;
+    this.element = importNode.firstElementChild as U;
 
-    this.element.id = "user-input"; //adding id to the form element
+    if (newElementId) {
+      this.element.id = newElementId; //adding id to the form element
+    }
     console.log(this.element);
+
+    this.addToDiv();
+  }
+
+  private addToDiv() {
+    //attach the form element to the div element
+    this.divElement.appendChild(this.element);
+  }
+
+  //* abstract methods
+  abstract configure?(): void;
+  abstract renderContent(): void;
+}
+
+class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
+  titleInput: HTMLInputElement;
+  descriptionInput: HTMLInputElement;
+  peopleInput: HTMLInputElement;
+
+  constructor() {
+    super("project-input", "app", "user-input");
+    console.log("constructor called");
 
     //* referencing the input elements
     this.titleInput = this.element.querySelector("#title") as HTMLInputElement;
@@ -125,20 +144,15 @@ class ProjectInput {
       "#people"
     ) as HTMLInputElement;
 
-    this.addFormToDiv();
     this.configure();
   }
 
   //* Methods
-
-  private addFormToDiv() {
-    //attach the form element to the div element
-    this.divElement.appendChild(this.element);
-  }
-
-  private configure() {
+  configure() {
     this.element.addEventListener("submit", this.submitHandler.bind(this));
   }
+
+  renderContent(): void {}
 
   private gatherInput(): [string, string, number] | void {
     const enteredTitle = this.titleInput.value;
@@ -198,30 +212,17 @@ class ProjectInput {
 
 //ProjectList Class
 
-class ProjectList {
-  templateElement: HTMLTemplateElement; //template
-  divElement: HTMLDivElement; //jaha par hume ye template dalna hai
-  element: HTMLElement;
+class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+  // templateElement: HTMLTemplateElement; //template
+  // divElement: HTMLDivElement; //jaha par hume ye template dalna hai
+  // element: HTMLElement;
   private assignedProjects: Project[];
 
   constructor(private type: "active" | "finished") {
+    super("project-list", "app", `${type}-projects`);
     console.log("😎😎😎 List constructor called");
 
-    this.templateElement = document.getElementById(
-      "project-list"
-    )! as HTMLTemplateElement;
-
-    this.divElement = document.getElementById("app")! as HTMLDivElement;
     this.assignedProjects = [];
-
-    //this is the copy of the template
-    const importNode = document.importNode(this.templateElement.content, true);
-
-    //* this is the 'section' element, which is the first child of the template
-    this.element = importNode.firstElementChild as HTMLElement;
-
-    this.element.id = `${this.type}-projects`; //adding id to the section element
-    console.log(this.element);
 
     projectState.addListener((projects: Project[]) => {
       let relevantProjects = projects.filter((project) => {
@@ -236,7 +237,6 @@ class ProjectList {
       this.renderProjects();
     });
 
-    this.addSectionToDiv();
     this.renderContent();
   }
 
@@ -253,16 +253,14 @@ class ProjectList {
     }
   }
 
-  private addSectionToDiv() {
-    this.divElement.appendChild(this.element);
-  }
-
-  private renderContent() {
+  renderContent() {
     this.element.querySelector("h2")!.textContent =
       this.type.toUpperCase() + " PROJECTS";
 
     this.element.querySelector("ul")!.id = `${this.type}-projects-list`;
   }
+
+  configure(): void {}
 }
 
 const projectInput = new ProjectInput();

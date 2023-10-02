@@ -60,33 +60,42 @@ function validate(input) {
     }
     return isValid;
 }
-class ProjectInput {
-    constructor() {
-        console.log("constructor called");
+//Generic class
+class Component {
+    constructor(templateId, divId, newElementId) {
         //reference to both the elements
-        this.templateElement = document.getElementById("project-input");
+        this.templateElement = document.getElementById(templateId);
         this.divElement = document.getElementById("app");
         //this is the copy of the template
         const importNode = document.importNode(this.templateElement.content, true);
         //* this is the 'form' element, which is the first child of the template
         this.element = importNode.firstElementChild;
-        this.element.id = "user-input"; //adding id to the form element
+        if (newElementId) {
+            this.element.id = newElementId; //adding id to the form element
+        }
         console.log(this.element);
+        this.addToDiv();
+    }
+    addToDiv() {
+        //attach the form element to the div element
+        this.divElement.appendChild(this.element);
+    }
+}
+class ProjectInput extends Component {
+    constructor() {
+        super("project-input", "app", "user-input");
+        console.log("constructor called");
         //* referencing the input elements
         this.titleInput = this.element.querySelector("#title");
         this.descriptionInput = this.element.querySelector("#description");
         this.peopleInput = this.element.querySelector("#people");
-        this.addFormToDiv();
         this.configure();
     }
     //* Methods
-    addFormToDiv() {
-        //attach the form element to the div element
-        this.divElement.appendChild(this.element);
-    }
     configure() {
         this.element.addEventListener("submit", this.submitHandler.bind(this));
     }
+    renderContent() { }
     gatherInput() {
         const enteredTitle = this.titleInput.value;
         const enteredDescription = this.descriptionInput.value;
@@ -134,19 +143,12 @@ class ProjectInput {
     }
 }
 //ProjectList Class
-class ProjectList {
+class ProjectList extends Component {
     constructor(type) {
+        super("project-list", "app", `${type}-projects`);
         this.type = type;
         console.log("😎😎😎 List constructor called");
-        this.templateElement = document.getElementById("project-list");
-        this.divElement = document.getElementById("app");
         this.assignedProjects = [];
-        //this is the copy of the template
-        const importNode = document.importNode(this.templateElement.content, true);
-        //* this is the 'section' element, which is the first child of the template
-        this.element = importNode.firstElementChild;
-        this.element.id = `${this.type}-projects`; //adding id to the section element
-        console.log(this.element);
         projectState.addListener((projects) => {
             let relevantProjects = projects.filter((project) => {
                 if (this.type === "active") {
@@ -159,7 +161,6 @@ class ProjectList {
             this.assignedProjects = relevantProjects;
             this.renderProjects();
         });
-        this.addSectionToDiv();
         this.renderContent();
     }
     renderProjects() {
@@ -171,14 +172,12 @@ class ProjectList {
             ul.appendChild(listItem);
         }
     }
-    addSectionToDiv() {
-        this.divElement.appendChild(this.element);
-    }
     renderContent() {
         this.element.querySelector("h2").textContent =
             this.type.toUpperCase() + " PROJECTS";
         this.element.querySelector("ul").id = `${this.type}-projects-list`;
     }
+    configure() { }
 }
 const projectInput = new ProjectInput();
 const activeProjects = new ProjectList("active");
