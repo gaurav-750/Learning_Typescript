@@ -1,4 +1,46 @@
 "use strict";
+var ProjectStatus;
+(function (ProjectStatus) {
+    ProjectStatus[ProjectStatus["Active"] = 0] = "Active";
+    ProjectStatus[ProjectStatus["Finished"] = 1] = "Finished";
+})(ProjectStatus || (ProjectStatus = {}));
+class Project {
+    constructor(id, title, description, people, status) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.people = people;
+        this.status = status;
+    }
+}
+class ProjectState {
+    constructor() {
+        this.listeners = []; //array of functions, whenever something changes, we will call all these functions
+        this.projects = [];
+    }
+    static getInstance() {
+        if (this.instance) {
+            return this.instance;
+        }
+        this.instance = new ProjectState();
+        return this.instance;
+    }
+    addListener(listenerfn) {
+        this.listeners.push(listenerfn);
+    }
+    addProject(title, description, people) {
+        const newProject = new Project(Math.random.toString(), title, description, people, ProjectStatus.Active);
+        this.projects.push(newProject);
+        console.log("🙏🙏 added new project:", this.projects);
+        //call all the listener functions
+        for (const listenerfn of this.listeners) {
+            console.log("listenerfn", listenerfn);
+            listenerfn(this.projects.slice()); //slice() is used to create a copy of the array
+        }
+    }
+}
+//! This is a global instace of ProjectState class - can access it everywhere
+const projectState = ProjectState.getInstance();
 function validate(input) {
     let isValid = true;
     if (input.required) {
@@ -86,6 +128,7 @@ class ProjectInput {
         if (Array.isArray(userInput)) {
             const [title, desc, people] = userInput;
             console.log(title, desc, people); //
+            projectState.addProject(title, desc, people); //add to projects array in the ProjectState class
             this.clearInputs();
         }
     }
@@ -94,16 +137,39 @@ class ProjectInput {
 class ProjectList {
     constructor(type) {
         this.type = type;
+        console.log("😎😎😎 List constructor called");
         this.templateElement = document.getElementById("project-list");
         this.divElement = document.getElementById("app");
+        this.assignedProjects = [];
         //this is the copy of the template
         const importNode = document.importNode(this.templateElement.content, true);
         //* this is the 'section' element, which is the first child of the template
         this.element = importNode.firstElementChild;
-        this.element.id = `${this.type}-projects`; //adding id to the form element
+        this.element.id = `${this.type}-projects`; //adding id to the section element
         console.log(this.element);
+        projectState.addListener((projects) => {
+            let relevantProjects = projects.filter((project) => {
+                if (this.type === "active") {
+                    return project.status === ProjectStatus.Active;
+                }
+                else {
+                    return project.status === ProjectStatus.Finished;
+                }
+            });
+            this.assignedProjects = relevantProjects;
+            this.renderProjects();
+        });
         this.addSectionToDiv();
         this.renderContent();
+    }
+    renderProjects() {
+        const ul = document.getElementById(`${this.type}-projects-list`);
+        ul.innerHTML = "";
+        for (const project of this.assignedProjects) {
+            const listItem = document.createElement("li");
+            listItem.textContent = project.title;
+            ul.appendChild(listItem);
+        }
     }
     addSectionToDiv() {
         this.divElement.appendChild(this.element);

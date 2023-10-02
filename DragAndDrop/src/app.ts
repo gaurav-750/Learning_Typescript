@@ -7,6 +7,64 @@ interface Validatable {
   max?: number;
 }
 
+enum ProjectStatus {
+  Active,
+  Finished,
+}
+
+type Listener = (projects: Project[]) => void;
+class Project {
+  constructor(
+    public id: string,
+    public title: string,
+    public description: string,
+    public people: number,
+    public status: ProjectStatus
+  ) {}
+}
+
+class ProjectState {
+  private listeners: Listener[] = []; //array of functions, whenever something changes, we will call all these functions
+  private projects: Project[] = [];
+  private static instance: ProjectState;
+
+  static getInstance() {
+    if (this.instance) {
+      return this.instance;
+    }
+
+    this.instance = new ProjectState();
+    return this.instance;
+  }
+
+  addListener(listenerfn: Listener) {
+    this.listeners.push(listenerfn);
+  }
+
+  addProject(title: string, description: string, people: number) {
+    const newProject = new Project(
+      Math.random.toString(),
+      title,
+      description,
+      people,
+      ProjectStatus.Active
+    );
+
+    this.projects.push(newProject);
+    console.log("🙏🙏 added new project:", this.projects);
+
+    //call all the listener functions
+    for (const listenerfn of this.listeners) {
+      console.log("listenerfn", listenerfn);
+
+      listenerfn(this.projects.slice()); //slice() is used to create a copy of the array
+    }
+  }
+}
+
+//! This is a global instace of ProjectState class - can access it everywhere
+const projectState = ProjectState.getInstance();
+
 function validate(input: Validatable) {
   let isValid = true;
 
@@ -131,6 +189,8 @@ class ProjectInput {
     if (Array.isArray(userInput)) {
       const [title, desc, people] = userInput;
       console.log(title, desc, people); //
+
+      projectState.addProject(title, desc, people); //add to projects array in the ProjectState class
       this.clearInputs();
     }
   }
@@ -142,13 +202,17 @@ class ProjectList {
   templateElement: HTMLTemplateElement; //template
   divElement: HTMLDivElement; //jaha par hume ye template dalna hai
   element: HTMLElement;
+  private assignedProjects: Project[];
 
   constructor(private type: "active" | "finished") {
+    console.log("😎😎😎 List constructor called");
+
     this.templateElement = document.getElementById(
       "project-list"
     )! as HTMLTemplateElement;
 
     this.divElement = document.getElementById("app")! as HTMLDivElement;
+    this.assignedProjects = [];
 
     //this is the copy of the template
     const importNode = document.importNode(this.templateElement.content, true);
@@ -156,11 +220,37 @@ class ProjectList {
     //* this is the 'section' element, which is the first child of the template
     this.element = importNode.firstElementChild as HTMLElement;
 
-    this.element.id = `${this.type}-projects`; //adding id to the form element
+    this.element.id = `${this.type}-projects`; //adding id to the section element
     console.log(this.element);
+
+    projectState.addListener((projects: Project[]) => {
+      let relevantProjects = projects.filter((project) => {
+        if (this.type === "active") {
+          return project.status === ProjectStatus.Active;
+        } else {
+          return project.status === ProjectStatus.Finished;
+        }
+      });
+
+      this.assignedProjects = relevantProjects;
+      this.renderProjects();
+    });
 
     this.addSectionToDiv();
     this.renderContent();
+  }
+
+  private renderProjects() {
+    const ul = document.getElementById(
+      `${this.type}-projects-list`
+    )! as HTMLUListElement;
+
+    ul.innerHTML = "";
+    for (const project of this.assignedProjects) {
+      const listItem = document.createElement("li");
+      listItem.textContent = project.title;
+      ul.appendChild(listItem);
+    }
   }
 
   private addSectionToDiv() {
