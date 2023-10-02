@@ -79,10 +79,10 @@ function validate(input: Validatable) {
   }
 
   if (input.min !== undefined && typeof input.value === "number") {
-    isValid = isValid && input.value > input.min;
+    isValid = isValid && input.value >= input.min;
   }
   if (input.max !== undefined && typeof input.value === "number") {
-    isValid = isValid && input.value < input.max;
+    isValid = isValid && input.value <= input.max;
   }
 
   return isValid;
@@ -91,16 +91,16 @@ function validate(input: Validatable) {
 //Generic class
 abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   templateElement: HTMLTemplateElement; //template
-  divElement: T; //jaha par hume ye template dalna hai
+  hostElement: T; //jaha par hume ye template dalna hai
   element: U;
 
-  constructor(templateId: string, divId: string, newElementId?: string) {
+  constructor(templateId: string, hostId: string, newElementId?: string) {
     //reference to both the elements
     this.templateElement = document.getElementById(
       templateId
     )! as HTMLTemplateElement;
 
-    this.divElement = document.getElementById("app")! as T;
+    this.hostElement = document.getElementById(hostId)! as T;
 
     //this is the copy of the template
     const importNode = document.importNode(this.templateElement.content, true);
@@ -118,7 +118,7 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 
   private addToDiv() {
     //attach the form element to the div element
-    this.divElement.appendChild(this.element);
+    this.hostElement.appendChild(this.element);
   }
 
   //* abstract methods
@@ -210,12 +210,37 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
   }
 }
 
-//ProjectList Class
+class ProjectItem extends Component<HTMLUListElement, HTMLElement> {
+  private project: Project;
 
+  get Persons() {
+    if (this.project.people === 1) {
+      return "1 person";
+    } else {
+      return `${this.project.people} persons`;
+    }
+  }
+
+  constructor(hostId: string, project: Project) {
+    super("single-project", hostId, project.id);
+
+    this.project = project;
+
+    this.configure();
+    this.renderContent();
+  }
+
+  configure(): void {}
+
+  renderContent(): void {
+    this.element.querySelector("h2")!.textContent = this.project.title;
+    this.element.querySelector("h3")!.textContent = this.Persons + " assigned";
+    this.element.querySelector("p")!.textContent = this.project.description;
+  }
+}
+
+//ProjectList Class
 class ProjectList extends Component<HTMLDivElement, HTMLElement> {
-  // templateElement: HTMLTemplateElement; //template
-  // divElement: HTMLDivElement; //jaha par hume ye template dalna hai
-  // element: HTMLElement;
   private assignedProjects: Project[];
 
   constructor(private type: "active" | "finished") {
@@ -247,9 +272,7 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 
     ul.innerHTML = "";
     for (const project of this.assignedProjects) {
-      const listItem = document.createElement("li");
-      listItem.textContent = project.title;
-      ul.appendChild(listItem);
+      new ProjectItem(ul.id, project);
     }
   }
 

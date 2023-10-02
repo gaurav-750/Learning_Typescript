@@ -53,19 +53,19 @@ function validate(input) {
         isValid = isValid && input.value.length < input.maxLength;
     }
     if (input.min !== undefined && typeof input.value === "number") {
-        isValid = isValid && input.value > input.min;
+        isValid = isValid && input.value >= input.min;
     }
     if (input.max !== undefined && typeof input.value === "number") {
-        isValid = isValid && input.value < input.max;
+        isValid = isValid && input.value <= input.max;
     }
     return isValid;
 }
 //Generic class
 class Component {
-    constructor(templateId, divId, newElementId) {
+    constructor(templateId, hostId, newElementId) {
         //reference to both the elements
         this.templateElement = document.getElementById(templateId);
-        this.divElement = document.getElementById("app");
+        this.hostElement = document.getElementById(hostId);
         //this is the copy of the template
         const importNode = document.importNode(this.templateElement.content, true);
         //* this is the 'form' element, which is the first child of the template
@@ -78,7 +78,7 @@ class Component {
     }
     addToDiv() {
         //attach the form element to the div element
-        this.divElement.appendChild(this.element);
+        this.hostElement.appendChild(this.element);
     }
 }
 class ProjectInput extends Component {
@@ -142,6 +142,28 @@ class ProjectInput extends Component {
         }
     }
 }
+class ProjectItem extends Component {
+    constructor(hostId, project) {
+        super("single-project", hostId, project.id);
+        this.project = project;
+        this.configure();
+        this.renderContent();
+    }
+    get Persons() {
+        if (this.project.people === 1) {
+            return "1 person";
+        }
+        else {
+            return `${this.project.people} persons`;
+        }
+    }
+    configure() { }
+    renderContent() {
+        this.element.querySelector("h2").textContent = this.project.title;
+        this.element.querySelector("h3").textContent = this.Persons + " assigned";
+        this.element.querySelector("p").textContent = this.project.description;
+    }
+}
 //ProjectList Class
 class ProjectList extends Component {
     constructor(type) {
@@ -167,9 +189,7 @@ class ProjectList extends Component {
         const ul = document.getElementById(`${this.type}-projects-list`);
         ul.innerHTML = "";
         for (const project of this.assignedProjects) {
-            const listItem = document.createElement("li");
-            listItem.textContent = project.title;
-            ul.appendChild(listItem);
+            new ProjectItem(ul.id, project);
         }
     }
     renderContent() {
