@@ -90,4 +90,30 @@ class ProjectInput {
         }
     }
 }
+//ProjectList Class
+class ProjectList {
+    constructor(type) {
+        this.type = type;
+        this.templateElement = document.getElementById("project-list");
+        this.divElement = document.getElementById("app");
+        //this is the copy of the template
+        const importNode = document.importNode(this.templateElement.content, true);
+        //* this is the 'section' element, which is the first child of the template
+        this.element = importNode.firstElementChild;
+        this.element.id = `${this.type}-projects`; //adding id to the form element
+        console.log(this.element);
+        this.addSectionToDiv();
+        this.renderContent();
+    }
+    addSectionToDiv() {
+        this.divElement.appendChild(this.element);
+    }
+    renderContent() {
+        this.element.querySelector("h2").textContent =
+            this.type.toUpperCase() + " PROJECTS";
+        this.element.querySelector("ul").id = `${this.type}-projects-list`;
+    }
+}
 const projectInput = new ProjectInput();
+const activeProjects = new ProjectList("active");
+const finishedProjects = new ProjectList("finished");

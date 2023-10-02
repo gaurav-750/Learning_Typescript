@@ -136,4 +136,46 @@ class ProjectInput {
   }
 }
 
+//ProjectList Class
+
+class ProjectList {
+  templateElement: HTMLTemplateElement; //template
+  divElement: HTMLDivElement; //jaha par hume ye template dalna hai
+  element: HTMLElement;
+
+  constructor(private type: "active" | "finished") {
+    this.templateElement = document.getElementById(
+      "project-list"
+    )! as HTMLTemplateElement;
+
+    this.divElement = document.getElementById("app")! as HTMLDivElement;
+
+    //this is the copy of the template
+    const importNode = document.importNode(this.templateElement.content, true);
+
+    //* this is the 'section' element, which is the first child of the template
+    this.element = importNode.firstElementChild as HTMLElement;
+
+    this.element.id = `${this.type}-projects`; //adding id to the form element
+    console.log(this.element);
+
+    this.addSectionToDiv();
+    this.renderContent();
+  }
+
+  private addSectionToDiv() {
+    this.divElement.appendChild(this.element);
+  }
+
+  private renderContent() {
+    this.element.querySelector("h2")!.textContent =
+      this.type.toUpperCase() + " PROJECTS";
+
+    this.element.querySelector("ul")!.id = `${this.type}-projects-list`;
+  }
+}
+
 const projectInput = new ProjectInput();
+
+const activeProjects = new ProjectList("active");
+const finishedProjects = new ProjectList("finished");
