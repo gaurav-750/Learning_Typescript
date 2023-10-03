@@ -180,19 +180,19 @@ class ProjectList extends Component {
         this.type = type;
         console.log("😎😎😎 List constructor called");
         this.assignedProjects = [];
-        projectState.addListener((projects) => {
-            let relevantProjects = projects.filter((project) => {
-                if (this.type === "active") {
-                    return project.status === ProjectStatus.Active;
-                }
-                else {
-                    return project.status === ProjectStatus.Finished;
-                }
-            });
-            this.assignedProjects = relevantProjects;
-            this.renderProjects();
-        });
+        this.configure();
         this.renderContent();
+    }
+    //implementing interface methods
+    dragOverHandler(event) {
+        const listEl = this.element.querySelector("ul");
+        listEl.classList.add("droppable"); //adding the styling while dragging over the element
+    }
+    dropHandler(event) { }
+    dragLeaveHandler(event) {
+        //remove the added style (in dragOverHandler)
+        const listEl = this.element.querySelector("ul");
+        listEl.classList.remove("droppable");
     }
     renderProjects() {
         const ul = document.getElementById(`${this.type}-projects-list`);
@@ -206,7 +206,23 @@ class ProjectList extends Component {
             this.type.toUpperCase() + " PROJECTS";
         this.element.querySelector("ul").id = `${this.type}-projects-list`;
     }
-    configure() { }
+    configure() {
+        this.element.addEventListener("dragover", this.dragOverHandler.bind(this));
+        this.element.addEventListener("dragleave", this.dragLeaveHandler.bind(this));
+        this.element.addEventListener("drop", this.dropHandler.bind(this));
+        projectState.addListener((projects) => {
+            let relevantProjects = projects.filter((project) => {
+                if (this.type === "active") {
+                    return project.status === ProjectStatus.Active;
+                }
+                else {
+                    return project.status === ProjectStatus.Finished;
+                }
+            });
+            this.assignedProjects = relevantProjects;
+            this.renderProjects();
+        });
+    }
 }
 const projectInput = new ProjectInput();
 const activeProjects = new ProjectList("active");
