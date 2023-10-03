@@ -4,6 +4,7 @@ var ProjectStatus;
     ProjectStatus[ProjectStatus["Active"] = 0] = "Active";
     ProjectStatus[ProjectStatus["Finished"] = 1] = "Finished";
 })(ProjectStatus || (ProjectStatus = {}));
+// type Listener = (projects: Project[]) => void;
 class Project {
     constructor(id, title, description, people, status) {
         this.id = id;
@@ -13,9 +14,18 @@ class Project {
         this.status = status;
     }
 }
-class ProjectState {
+class State {
     constructor() {
-        this.listeners = []; //array of functions, whenever something changes, we will call all these functions
+        this.listeners = [];
+    }
+    addListener(listenerFn) {
+        this.listeners.push(listenerFn);
+    }
+}
+class ProjectState extends State {
+    constructor() {
+        super(...arguments);
+        // private listeners: Listener[] = []; //array of functions, whenever something changes, we will call all these functions
         this.projects = [];
     }
     static getInstance() {
@@ -25,14 +35,24 @@ class ProjectState {
         this.instance = new ProjectState();
         return this.instance;
     }
-    addListener(listenerfn) {
-        this.listeners.push(listenerfn);
-    }
+    // addListener(listenerfn: Listener) {
+    //   this.listeners.push(listenerfn);
+    // }
     addProject(title, description, people) {
-        const newProject = new Project(Math.random.toString(), title, description, people, ProjectStatus.Active);
-        this.projects.push(newProject);
+        const newProject = new Project(Math.random().toString(), title, description, people, ProjectStatus.Active);
         console.log("🙏🙏 added new project:", this.projects);
-        //call all the listener functions
+        this.projects.push(newProject);
+        this.updateListeners();
+    }
+    moveProject(projectId, newStatus) {
+        const project = this.projects.find((prj) => prj.id === projectId);
+        console.log("🙏🙏 moveProject", project);
+        if (project && project.status !== newStatus) {
+            project.status = newStatus;
+            this.updateListeners();
+        }
+    }
+    updateListeners() {
         for (const listenerfn of this.listeners) {
             console.log("listenerfn", listenerfn);
             listenerfn(this.projects.slice()); //slice() is used to create a copy of the array
@@ -158,7 +178,9 @@ class ProjectItem extends Component {
         }
     }
     dragStartHandler(event) {
-        console.log("dragStartHandler", event);
+        console.log("👍dragStartHandler", event, this.project);
+        event.dataTransfer.setData("text/plain", this.project.id); //setting the data to be transferred
+        event.dataTransfer.effectAllowed = "move";
     }
     dragEndHandler(event) {
         console.log("DragEnd");
@@ -185,12 +207,23 @@ class ProjectList extends Component {
     }
     //implementing interface methods
     dragOverHandler(event) {
-        const listEl = this.element.querySelector("ul");
-        listEl.classList.add("droppable"); //adding the styling while dragging over the element
+        //checking if the element is a valid drop target
+        if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
+            event.preventDefault(); //default in JS is to not allow dropping
+            const listEl = this.element.querySelector("ul");
+            listEl.classList.add("droppable"); //adding the styling while dragging over the element
+        }
     }
-    dropHandler(event) { }
+    dropHandler(event) {
+        console.log("🛑🛑dropHandler", event);
+        //get the project id from the dataTransfer object
+        const projId = event.dataTransfer.getData("text/plain");
+        console.log("projId in dropHandler", projId);
+        projectState.moveProject(projId, this.type === "active" ? ProjectStatus.Active : ProjectStatus.Finished);
+    }
     dragLeaveHandler(event) {
         //remove the added style (in dragOverHandler)
+        console.log("🙂dragLeaveHandler", event);
         const listEl = this.element.querySelector("ul");
         listEl.classList.remove("droppable");
     }
@@ -198,7 +231,7 @@ class ProjectList extends Component {
         const ul = document.getElementById(`${this.type}-projects-list`);
         ul.innerHTML = "";
         for (const project of this.assignedProjects) {
-            new ProjectItem(ul.id, project);
+            new ProjectItem(this.element.querySelector("ul").id, project);
         }
     }
     renderContent() {

@@ -24,7 +24,7 @@ enum ProjectStatus {
   Finished,
 }
 
-type Listener = (projects: Project[]) => void;
+// type Listener = (projects: Project[]) => void;
 class Project {
   constructor(
     public id: string,
@@ -35,8 +35,18 @@ class Project {
   ) {}
 }
 
-class ProjectState {
-  private listeners: Listener[] = []; //array of functions, whenever something changes, we will call all these functions
+type Listener<T> = (items: T[]) => void;
+
+class State<T> {
+  protected listeners: Listener<T>[] = [];
+
+  addListener(listenerFn: Listener<T>) {
+    this.listeners.push(listenerFn);
+  }
+}
+
+class ProjectState extends State<Project> {
+  // private listeners: Listener[] = []; //array of functions, whenever something changes, we will call all these functions
   private projects: Project[] = [];
   private static instance: ProjectState;
 
@@ -49,23 +59,36 @@ class ProjectState {
     return this.instance;
   }
 
-  addListener(listenerfn: Listener) {
-    this.listeners.push(listenerfn);
-  }
+  // addListener(listenerfn: Listener) {
+  //   this.listeners.push(listenerfn);
+  // }
 
   addProject(title: string, description: string, people: number) {
     const newProject = new Project(
-      Math.random.toString(),
+      Math.random().toString(),
       title,
       description,
       people,
       ProjectStatus.Active
     );
 
-    this.projects.push(newProject);
     console.log("🙏🙏 added new project:", this.projects);
+    this.projects.push(newProject);
 
-    //call all the listener functions
+    this.updateListeners();
+  }
+
+  moveProject(projectId: string, newStatus: ProjectStatus) {
+    const project = this.projects.find((prj) => prj.id === projectId);
+    console.log("🙏🙏 moveProject", project);
+
+    if (project && project.status !== newStatus) {
+      project.status = newStatus;
+      this.updateListeners();
+    }
+  }
+
+  updateListeners() {
     for (const listenerfn of this.listeners) {
       console.log("listenerfn", listenerfn);
 
@@ -223,7 +246,7 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
 }
 
 class ProjectItem
-  extends Component<HTMLUListElement, HTMLElement>
+  extends Component<HTMLUListElement, HTMLLIElement>
   implements Draggable
 {
   private project: Project;
@@ -236,14 +259,6 @@ class ProjectItem
     }
   }
 
-  dragStartHandler(event: DragEvent): void {
-    console.log("dragStartHandler", event);
-  }
-
-  dragEndHandler(event: DragEvent): void {
-    console.log("DragEnd");
-  }
-
   constructor(hostId: string, project: Project) {
     super("single-project", hostId, project.id);
 
@@ -251,6 +266,17 @@ class ProjectItem
 
     this.configure();
     this.renderContent();
+  }
+
+  dragStartHandler(event: DragEvent): void {
+    console.log("👍dragStartHandler", event, this.project);
+
+    event.dataTransfer!.setData("text/plain", this.project.id); //setting the data to be transferred
+    event.dataTransfer!.effectAllowed = "move";
+  }
+
+  dragEndHandler(event: DragEvent): void {
+    console.log("DragEnd");
   }
 
   configure(): void {
@@ -274,7 +300,7 @@ class ProjectList
   extends Component<HTMLDivElement, HTMLElement>
   implements DragTarget
 {
-  private assignedProjects: Project[];
+  assignedProjects: Project[];
 
   constructor(private type: "active" | "finished") {
     super("project-list", "app", `${type}-projects`);
@@ -288,14 +314,32 @@ class ProjectList
 
   //implementing interface methods
   dragOverHandler(event: DragEvent): void {
-    const listEl = this.element.querySelector("ul")!;
-    listEl.classList.add("droppable"); //adding the styling while dragging over the element
+    //checking if the element is a valid drop target
+    if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
+      event.preventDefault(); //default in JS is to not allow dropping
+
+      const listEl = this.element.querySelector("ul")!;
+      listEl.classList.add("droppable"); //adding the styling while dragging over the element
+    }
   }
 
-  dropHandler(event: DragEvent): void {}
+  dropHandler(event: DragEvent): void {
+    console.log("🛑🛑dropHandler", event);
+
+    //get the project id from the dataTransfer object
+    const projId = event.dataTransfer!.getData("text/plain");
+    console.log("projId in dropHandler", projId);
+
+    projectState.moveProject(
+      projId,
+      this.type === "active" ? ProjectStatus.Active : ProjectStatus.Finished
+    );
+  }
 
   dragLeaveHandler(event: DragEvent): void {
     //remove the added style (in dragOverHandler)
+    console.log("🙂dragLeaveHandler", event);
+
     const listEl = this.element.querySelector("ul")!;
     listEl.classList.remove("droppable");
   }
@@ -307,7 +351,7 @@ class ProjectList
 
     ul.innerHTML = "";
     for (const project of this.assignedProjects) {
-      new ProjectItem(ul.id, project);
+      new ProjectItem(this.element.querySelector("ul")!.id, project);
     }
   }
 
