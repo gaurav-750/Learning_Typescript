@@ -2,18 +2,6 @@
 // Drag and Drop Interfaces
 var App;
 (function (App) {
-    let ProjectStatus;
-    (function (ProjectStatus) {
-        ProjectStatus[ProjectStatus["Active"] = 0] = "Active";
-        ProjectStatus[ProjectStatus["Finished"] = 1] = "Finished";
-    })(ProjectStatus = App.ProjectStatus || (App.ProjectStatus = {}));
-})(App || (App = {}));
-//importing the drag and drop interfaces (namespace)
-/// <reference path="drag-drop-interface.ts" />
-/// <reference path="project-model.ts" />
-var App;
-(function (App) {
-    // type Listener = (projects: Project[]) => void;
     class Project {
         constructor(id, title, description, people, status) {
             this.id = id;
@@ -23,6 +11,15 @@ var App;
             this.status = status;
         }
     }
+    App.Project = Project;
+    let ProjectStatus;
+    (function (ProjectStatus) {
+        ProjectStatus[ProjectStatus["Active"] = 0] = "Active";
+        ProjectStatus[ProjectStatus["Finished"] = 1] = "Finished";
+    })(ProjectStatus = App.ProjectStatus || (App.ProjectStatus = {}));
+})(App || (App = {}));
+var App;
+(function (App) {
     class State {
         constructor() {
             this.listeners = [];
@@ -48,7 +45,7 @@ var App;
         //   this.listeners.push(listenerfn);
         // }
         addProject(title, description, people) {
-            const newProject = new Project(Math.random().toString(), title, description, people, App.ProjectStatus.Active);
+            const newProject = new App.Project(Math.random().toString(), title, description, people, App.ProjectStatus.Active);
             console.log("🙏🙏 added new project:", this.projects);
             this.projects.push(newProject);
             this.updateListeners();
@@ -68,8 +65,12 @@ var App;
             }
         }
     }
+    App.ProjectState = ProjectState;
     //! This is a global instace of ProjectState class - can access it everywhere
-    const projectState = ProjectState.getInstance();
+    App.projectState = ProjectState.getInstance();
+})(App || (App = {}));
+var App;
+(function (App) {
     function validate(input) {
         let isValid = true;
         if (input.required) {
@@ -89,6 +90,10 @@ var App;
         }
         return isValid;
     }
+    App.validate = validate;
+})(App || (App = {}));
+var App;
+(function (App) {
     //Generic class
     class Component {
         constructor(templateId, hostId, newElementId) {
@@ -110,7 +115,11 @@ var App;
             this.hostElement.appendChild(this.element);
         }
     }
-    class ProjectInput extends Component {
+    App.Component = Component;
+})(App || (App = {}));
+var App;
+(function (App) {
+    class ProjectInput extends App.Component {
         constructor() {
             super("project-input", "app", "user-input");
             console.log("constructor called");
@@ -144,9 +153,9 @@ var App;
                 min: 1,
                 max: 5,
             };
-            if (!validate(titleValidatable) ||
-                !validate(descriptionValidatable) ||
-                !validate(peopleValidatable)) {
+            if (!App.validate(titleValidatable) ||
+                !App.validate(descriptionValidatable) ||
+                !App.validate(peopleValidatable)) {
                 alert("Invalid input, please try again!");
                 return;
             }
@@ -166,12 +175,81 @@ var App;
             if (Array.isArray(userInput)) {
                 const [title, desc, people] = userInput;
                 console.log(title, desc, people); //
-                projectState.addProject(title, desc, people); //add to projects array in the ProjectState class
+                App.projectState.addProject(title, desc, people); //add to projects array in the ProjectState class
                 this.clearInputs();
             }
         }
     }
-    class ProjectItem extends Component {
+    App.ProjectInput = ProjectInput;
+})(App || (App = {}));
+var App;
+(function (App) {
+    class ProjectList extends App.Component {
+        constructor(type) {
+            super("project-list", "app", `${type}-projects`);
+            this.type = type;
+            console.log("😎😎😎 List constructor called");
+            this.assignedProjects = [];
+            this.configure();
+            this.renderContent();
+        }
+        //implementing interface methods
+        dragOverHandler(event) {
+            //checking if the element is a valid drop target
+            if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
+                event.preventDefault(); //default in JS is to not allow dropping
+                const listEl = this.element.querySelector("ul");
+                listEl.classList.add("droppable"); //adding the styling while dragging over the element
+            }
+        }
+        dropHandler(event) {
+            console.log("🛑🛑dropHandler", event);
+            //get the project id from the dataTransfer object
+            const projId = event.dataTransfer.getData("text/plain");
+            console.log("projId in dropHandler", projId);
+            App.projectState.moveProject(projId, this.type === "active" ? App.ProjectStatus.Active : App.ProjectStatus.Finished);
+        }
+        dragLeaveHandler(event) {
+            //remove the added style (in dragOverHandler)
+            console.log("🙂dragLeaveHandler", event);
+            const listEl = this.element.querySelector("ul");
+            listEl.classList.remove("droppable");
+        }
+        renderProjects() {
+            const ul = document.getElementById(`${this.type}-projects-list`);
+            ul.innerHTML = "";
+            for (const project of this.assignedProjects) {
+                new App.ProjectItem(this.element.querySelector("ul").id, project);
+            }
+        }
+        renderContent() {
+            this.element.querySelector("h2").textContent =
+                this.type.toUpperCase() + " PROJECTS";
+            this.element.querySelector("ul").id = `${this.type}-projects-list`;
+        }
+        configure() {
+            this.element.addEventListener("dragover", this.dragOverHandler.bind(this));
+            this.element.addEventListener("dragleave", this.dragLeaveHandler.bind(this));
+            this.element.addEventListener("drop", this.dropHandler.bind(this));
+            App.projectState.addListener((projects) => {
+                let relevantProjects = projects.filter((project) => {
+                    if (this.type === "active") {
+                        return project.status === App.ProjectStatus.Active;
+                    }
+                    else {
+                        return project.status === App.ProjectStatus.Finished;
+                    }
+                });
+                this.assignedProjects = relevantProjects;
+                this.renderProjects();
+            });
+        }
+    }
+    App.ProjectList = ProjectList;
+})(App || (App = {}));
+var App;
+(function (App) {
+    class ProjectItem extends App.Component {
         constructor(hostId, project) {
             super("single-project", hostId, project.id);
             this.project = project;
@@ -205,69 +283,23 @@ var App;
             this.element.querySelector("p").textContent = this.project.description;
         }
     }
+    App.ProjectItem = ProjectItem;
+})(App || (App = {}));
+//importing the drag and drop interfaces (namespace)
+/// <reference path="models/drag-drop-interface.ts" />
+/// <reference path="models/project-model.ts" />
+/// <reference path="state/project-state.ts" />
+/// <reference path="utils/validation.ts" />
+/// <reference path="components/base-component.ts" />
+/// <reference path="components/project-input.ts" />
+/// <reference path="components/project-list.ts" />
+/// <reference path="components/project-item.ts" />
+var App;
+(function (App) {
+    //
+    //ProjectItem class
     //ProjectList Class
-    class ProjectList extends Component {
-        constructor(type) {
-            super("project-list", "app", `${type}-projects`);
-            this.type = type;
-            console.log("😎😎😎 List constructor called");
-            this.assignedProjects = [];
-            this.configure();
-            this.renderContent();
-        }
-        //implementing interface methods
-        dragOverHandler(event) {
-            //checking if the element is a valid drop target
-            if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
-                event.preventDefault(); //default in JS is to not allow dropping
-                const listEl = this.element.querySelector("ul");
-                listEl.classList.add("droppable"); //adding the styling while dragging over the element
-            }
-        }
-        dropHandler(event) {
-            console.log("🛑🛑dropHandler", event);
-            //get the project id from the dataTransfer object
-            const projId = event.dataTransfer.getData("text/plain");
-            console.log("projId in dropHandler", projId);
-            projectState.moveProject(projId, this.type === "active" ? App.ProjectStatus.Active : App.ProjectStatus.Finished);
-        }
-        dragLeaveHandler(event) {
-            //remove the added style (in dragOverHandler)
-            console.log("🙂dragLeaveHandler", event);
-            const listEl = this.element.querySelector("ul");
-            listEl.classList.remove("droppable");
-        }
-        renderProjects() {
-            const ul = document.getElementById(`${this.type}-projects-list`);
-            ul.innerHTML = "";
-            for (const project of this.assignedProjects) {
-                new ProjectItem(this.element.querySelector("ul").id, project);
-            }
-        }
-        renderContent() {
-            this.element.querySelector("h2").textContent =
-                this.type.toUpperCase() + " PROJECTS";
-            this.element.querySelector("ul").id = `${this.type}-projects-list`;
-        }
-        configure() {
-            this.element.addEventListener("dragover", this.dragOverHandler.bind(this));
-            this.element.addEventListener("dragleave", this.dragLeaveHandler.bind(this));
-            this.element.addEventListener("drop", this.dropHandler.bind(this));
-            projectState.addListener((projects) => {
-                let relevantProjects = projects.filter((project) => {
-                    if (this.type === "active") {
-                        return project.status === App.ProjectStatus.Active;
-                    }
-                    else {
-                        return project.status === App.ProjectStatus.Finished;
-                    }
-                });
-                this.assignedProjects = relevantProjects;
-                this.renderProjects();
-            });
-        }
-    }
-    const projectInput = new ProjectInput();
-    const activeProjects = new ProjectList("active");
-    const finishedProjects = new ProjectList("finished");
+    const projectInput = new App.ProjectInput();
+    const activeProjects = new App.ProjectList("active");
+    const finishedProjects = new App.ProjectList("finished");
 })(App || (App = {}));
