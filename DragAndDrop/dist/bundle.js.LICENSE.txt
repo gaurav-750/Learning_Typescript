@@ -1,3 +1,0 @@
-//! Importing modules
-
-//! This is a global instace of ProjectState class - can access it everywhere

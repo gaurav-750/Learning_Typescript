@@ -19,7 +19,7 @@ module.exports = {
     ],
   },
 
-  devtool: "inline-source-map", //to debug ts files in browser
+  // devtool: "inline-source-map", //to debug ts files in browser
 
   module: {
     //to tell webpack how to handle different files
