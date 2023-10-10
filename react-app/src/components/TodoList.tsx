@@ -1,9 +1,5 @@
 import React from "react";
-
-interface Todo {
-  id: number;
-  title: string;
-}
+import { Todo } from "../models/todo.model";
 
 interface TodoListProps {
   items: Todo[];
