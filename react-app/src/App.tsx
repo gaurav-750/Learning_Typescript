@@ -1,5 +1,6 @@
 import React from "react";
 import TodoList from "./components/TodoList";
+import NewTodo from "./components/NewTodo";
 
 const App: React.FC = () => {
   const todos = [
@@ -7,8 +8,13 @@ const App: React.FC = () => {
     { id: 2, title: "Take out the trash" },
   ];
 
+  const todoAddHandler = (text: string) => {
+    console.log("App todoAddHandler:", text);
+  };
+
   return (
     <div className="App">
+      <NewTodo onAddTodo={todoAddHandler} />
       <TodoList items={todos} />
     </div>
   );
